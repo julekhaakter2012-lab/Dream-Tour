@@ -10646,6 +10646,95 @@ go = function (n, a, o) { const r = _goBase(n, a, o); const rb = $('#demo-ribbon
 
 
 
+<script id="dream-tour-pwa-runtime">
+(function(){
+  'use strict';
+  const app=document.getElementById('app');
+  if(!app) return;
+  // The companion manifest.json and 192/512 PNG icons are included in the PWA ZIP.
+  // Browsers require a real same-origin manifest file for reliable install promotion.
+  try{const theme=document.querySelector('meta[name="theme-color"]');if(theme)theme.content='#075b47';}catch(e){}
+  let deferredPrompt=null, banner=null, dismissed=false;
+  const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  function createBanner(){
+    if(banner||standalone()) return;
+    banner=document.createElement('aside');banner.id='pwa-install-banner';banner.hidden=true;
+    banner.innerHTML='<div class="pwa-icon"><i class="fa-solid fa-download"></i></div><div class="pwa-copy"><b>Install App</b><span>Install the app for better experience</span></div><button class="pwa-install" type="button">Install</button><button class="pwa-close" type="button" aria-label="Close">×</button>';
+    app.appendChild(banner);
+    banner.querySelector('.pwa-install').addEventListener('click',install);
+    banner.querySelector('.pwa-close').addEventListener('click',()=>{dismissed=true;banner.hidden=true;});
+  }
+  function showBanner(){createBanner();if(!banner||dismissed||standalone())return;banner.hidden=false;}
+  function hideBanner(){if(banner)banner.hidden=true;}
+  function toastMessage(message){
+    if(typeof window.toast==='function'){window.toast(message,'info');return;}
+    const root=document.getElementById('toast-root');if(!root)return;
+    const n=document.createElement('div');n.className='toast info';n.textContent=message;root.appendChild(n);setTimeout(()=>n.remove(),4200);
+  }
+  async function install(){
+    if(standalone()){toastMessage('App is already installed.');hideBanner();return;}
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      try{const choice=await deferredPrompt.userChoice;if(choice&&choice.outcome==='accepted'){hideBanner();} }
+      catch(e){}
+      deferredPrompt=null;return;
+    }
+    const ua=navigator.userAgent||'';
+    if(/iphone|ipad|ipod/i.test(ua)){
+      toastMessage('iPhone: Safari Share button → Add to Home Screen → Add.');
+    }else{
+      toastMessage('Chrome menu (⋮) → Install app / Add to Home screen.');
+    }
+  }
+  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredPrompt=event;showBanner();});
+  window.addEventListener('appinstalled',()=>{deferredPrompt=null;hideBanner();toastMessage('Dream Tour installed successfully.');});
+  window.addEventListener('pageshow',()=>{if(standalone())hideBanner();});
+  // A browser may not dispatch beforeinstallprompt (notably iOS); keep a helpful install entry visible.
+  function sync(){
+    const loggedIn=!!(document.querySelector('#bottom-nav:not(.nav-hidden)')&&getComputedStyle(document.querySelector('#bottom-nav')).display!=='none');
+    if(loggedIn&&!standalone())showBanner();else hideBanner();
+  }
+  createBanner();
+  if(window.MutationObserver){const mo=new MutationObserver(sync);mo.observe(app,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});}
+  sync();
+  window.addEventListener('pageshow',sync);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});
+})();
+</script>
+
+
+<style id="dream-tour-visibility-and-carousel-fix">
+/* Premium readability fixes: keep text readable on the light mint/white UI. */
+#app .mrow{color:#153f35!important;background:#fff!important}
+#app .mrow b{color:#123f35!important;font-weight:800!important;text-shadow:none!important}
+#app .mrow small{color:#647b73!important;font-weight:500!important;text-shadow:none!important}
+#app .mrow>i:last-child{color:#71877f!important}
+#app .cat-card .font-semibold,
+#app .cat-card .text-white,
+#app .cat-card .text-white\/60,
+#app .cat-card [class*="text-white"]{color:#153f35!important;text-shadow:none!important}
+#app .section-title{color:#164b3d!important}
+#app .notice,.notice .mq,.notice .mq span{color:#174b3e!important}
+/* Full-width, stable banner carousel on Android and narrow screens. */
+#app .carousel{position:relative!important;display:block!important;width:100%!important;max-width:100%!important;aspect-ratio:16/8!important;min-height:170px!important;height:auto!important;overflow:hidden!important;box-sizing:border-box!important;background:#e7f3ee!important}
+#app .carousel .slides{display:flex!important;width:100%!important;height:100%!important;min-height:inherit!important;flex-wrap:nowrap!important;will-change:transform}
+#app .carousel .slide{position:relative!important;display:block!important;flex:0 0 100%!important;width:100%!important;min-width:100%!important;max-width:100%!important;height:100%!important;min-height:170px!important;overflow:hidden!important;box-sizing:border-box!important}
+#app .carousel .slide>img,
+#app .carousel .slide>picture,
+#app .carousel .slide img{display:block!important;width:100%!important;height:100%!important;max-width:none!important;min-width:100%!important;object-fit:cover!important;object-position:center!important;margin:0!important;border:0!important}
+#app .carousel .slide>img{position:absolute!important;inset:0!important}
+#app .carousel .slide .absolute.inset-0{z-index:1!important;pointer-events:none!important}
+#app .carousel .slide .absolute:not(.inset-0){z-index:2!important;color:#fff!important;text-shadow:0 2px 8px rgba(0,0,0,.65)!important}
+#app .carousel .dots{z-index:5!important}
+#app .carousel .dots i{background:rgba(255,255,255,.7)!important;box-shadow:0 1px 4px rgba(0,0,0,.25)!important}
+#app .carousel .dots i.on{background:#07966f!important}
+@media(max-width:520px){
+ #app .carousel{aspect-ratio:16/8!important;min-height:150px!important;border-radius:18px!important}
+ #app .carousel .slide{min-height:150px!important}
+ #app .mrow{min-height:76px!important}
+}
+@media(prefers-reduced-motion:reduce){#app .carousel .slides{transition:none!important}}
+</style>
 
 </body>
 </html>
